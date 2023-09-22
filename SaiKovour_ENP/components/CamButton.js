@@ -4,7 +4,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 
 export default function CamButton({title, onPress, icon, color}){
     return(
-        <TouchableOpacity onPress={onPress} style={styles.button}>
+        <TouchableOpacity onPress={() => onPress} style={styles.button}>
             <MaterialCommunityIcons name={icon} color={color} size={35} />
             <Text style={styles.text}>{title}</Text>
         </TouchableOpacity>
