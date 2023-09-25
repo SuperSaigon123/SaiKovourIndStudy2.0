@@ -3,10 +3,9 @@ import { StyleSheet, Image, Text, View, useState, TouchableOpacity } from 'react
 import { Camera, CameraType } from 'expo-camera';
 import { Button, IconButton } from 'react-native-paper';
 import CamButton from '../components/CamButton';
-import startingPicture from '../assets/ObamaExample.jpg'
 import * as MediaLibrary from 'expo-media-library'
 
-export default function CameraScreen() {
+export default function CameraScreen({navigation}) {
     const [image, setImage] = React.useState(null)
     const [type, setType] = React.useState(CameraType.back);
     const [permission, requestPermission] = React.useState(null);
@@ -30,7 +29,7 @@ export default function CameraScreen() {
         try{
           const data = await cameraRef.current.takePictureAsync();
           console.log(data)
-          setImage[data.uri];
+          setImage(data.uri);
         } catch(e){
           console.log(e);
         }
@@ -41,7 +40,7 @@ export default function CameraScreen() {
       console.log('test')
       if(image) {
         try {
-          await MediaLibrary.createAssetAsync()
+          const asset = await MediaLibrary.createAssetAsync(image)
           alert('Picture saved!')
           setImage(null)
         } catch(e) {
@@ -52,6 +51,10 @@ export default function CameraScreen() {
 
     if(permission === false){
       return <Text>No access to camera</Text>
+    }
+
+    function testFunc(){
+      console.log("Test")
     }
 
     return (
@@ -68,13 +71,23 @@ export default function CameraScreen() {
               mode={'outlined'}
               iconColor='#FFFFFF'
               size={40}
-              onPress={() => console.log('switch')}/>
+              onPress={() => {
+                setType(
+                  type === CameraType.back ? CameraType.front : CameraType.back
+                );
+              }}/>
             <IconButton 
               icon={"flash"} 
               mode={'outlined'}
-              iconColor='#FFFFFF'
+              iconColor={flash === Camera.Constants.FlashMode.off ? 'gray' : '#fff'}
               size={40}
-              onPress={() => console.log('flash')}/>
+              onPress={() =>
+                setFlash(
+                  flash === Camera.Constants.FlashMode.off
+                    ? Camera.Constants.FlashMode.on && console.log("Flash: ON")
+                    : Camera.Constants.FlashMode.off
+                )
+              }/>
           </View>
         </Camera>
         :
@@ -87,15 +100,32 @@ export default function CameraScreen() {
             justifyContent: 'space-between',
             paddingHorizontal: 50
           }}>
-            <Button title={'Retake photo'} icon="refresh" onPress={() => setImage(null)}/>
-            <Button title={'Save'} icon="check" onPress={saveImage}/>
+            <Button 
+              icon="refresh" 
+              onPress={() => setImage(null)} 
+              style={styles.button}
+              textColor='white'>
+                Re-take
+            </Button>
+            <Button 
+              icon="check" 
+              onPress={() => {
+                navigation.navigate('Import', {
+                  imageData: image.uri
+                })
+                setImage(null)
+              }} 
+              style={styles.button}
+              textColor='white'>
+                Save
+            </Button>
           </View>
           :
           <CamButton
             title={'Take picture'} 
             icon={'camera'}
             color={'white'}
-            onPress={takePicture}
+            onPressFunc={takePicture}
             ></CamButton>
 }
         </View>
@@ -112,5 +142,13 @@ export default function CameraScreen() {
     }, 
     camera: {
       flex: 1,
+    },
+    button: {
+      marginBottom: -20,
+      height: 40,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 100,
     },
   });
