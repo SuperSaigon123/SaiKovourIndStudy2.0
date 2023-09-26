@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View, useState, Image } from 'react-native';
+import React, {useEffect} from 'react';
+import { StyleSheet, Text, View, useState, Image} from 'react-native';
 import { Button } from 'react-native-elements';
 import startingPicture from '../assets/ObamaExample.jpg'
 
@@ -7,7 +7,8 @@ import * as ImagePicker from 'expo-image-picker';
 
 export default function ImportScreen({route}){
 
-  const [image, setImage] = React.useState(route.params.imageData === undefined ? null : route.params.imageData); 
+  let initial = null;
+  const [image, setImage] = React.useState(null); 
 
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
@@ -18,17 +19,23 @@ export default function ImportScreen({route}){
       quality: 1,
     });
 
-    console.log(result);
-
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
   };
 
+    useEffect(() => {
+      console.log(route)
+      console.log(route.params)
+
+      if (route.params.paraKey !== undefined){
+        initial = route.params.paraKey
+      }
+    });
+
   return (
       <View style={styles.container}>
-        <Text>Import screen</Text>
-        <Image style={styles.image} source={startingPicture} /> 
+        <Text>Import screen</Text> 
         <Image style={styles.image} source={image} /> 
         <Button title="Click me" style={styles.button} onPress={pickImage} /> 
         
@@ -51,4 +58,4 @@ export default function ImportScreen({route}){
       width: 100,
       height: 100,
     },
-  });
+  }); 

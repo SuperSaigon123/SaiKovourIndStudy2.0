@@ -7,6 +7,7 @@ import * as MediaLibrary from 'expo-media-library'
 
 export default function CameraScreen({navigation}) {
     const [image, setImage] = React.useState(null)
+    const [uri, setUri] = React.useState(null)
     const [type, setType] = React.useState(CameraType.back);
     const [permission, requestPermission] = React.useState(null);
     const [flash, setFlash] = React.useState(Camera.Constants.FlashMode.off)
@@ -30,6 +31,7 @@ export default function CameraScreen({navigation}) {
           const data = await cameraRef.current.takePictureAsync();
           console.log(data)
           setImage(data.uri);
+          setUri(data.uri)
         } catch(e){
           console.log(e);
         }
@@ -43,6 +45,7 @@ export default function CameraScreen({navigation}) {
           const asset = await MediaLibrary.createAssetAsync(image)
           alert('Picture saved!')
           setImage(null)
+          setUri(null)
         } catch(e) {
           console.log(e)
         }
@@ -102,7 +105,9 @@ export default function CameraScreen({navigation}) {
           }}>
             <Button 
               icon="refresh" 
-              onPress={() => setImage(null)} 
+              onPress={() =>{
+                setImage(null)
+                setUri(null)}} 
               style={styles.button}
               textColor='white'>
                 Re-take
@@ -111,9 +116,10 @@ export default function CameraScreen({navigation}) {
               icon="check" 
               onPress={() => {
                 navigation.navigate('Import', {
-                  imageData: image.uri
+                  paramKey: image
                 })
                 setImage(null)
+                setUri(null)
               }} 
               style={styles.button}
               textColor='white'>
