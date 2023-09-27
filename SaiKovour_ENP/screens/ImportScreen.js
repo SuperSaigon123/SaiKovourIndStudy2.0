@@ -1,11 +1,12 @@
 import React, {useEffect} from 'react';
 import { StyleSheet, Text, View, useState, Image} from 'react-native';
 import { Button } from 'react-native-elements';
+import {useFocusEffect} from '@react-navigation/native'
 import startingPicture from '../assets/ObamaExample.jpg'
 
 import * as ImagePicker from 'expo-image-picker';
 
-export default function ImportScreen({route}){
+export default function ImportScreen({route, navigation}){
 
   let initial = null;
   const [image, setImage] = React.useState(null); 
@@ -24,19 +25,24 @@ export default function ImportScreen({route}){
     }
   };
 
-    useEffect(() => {
-      console.log(route)
-      console.log(route.params)
+    useFocusEffect(
+      React.useCallback(() => {
+        console.log(route)
+        console.log(route.params)
 
-      if (route.params.paraKey !== undefined){
-        initial = route.params.paraKey
-      }
-    });
+        if (route.params !== undefined){
+          initial = route.params.paramKey
+        }
+
+        setImage(initial)
+        
+      })
+    );
 
   return (
       <View style={styles.container}>
         <Text>Import screen</Text> 
-        <Image style={styles.image} source={image} /> 
+        <Image style={styles.image} source={{uri: image}} /> 
         <Button title="Click me" style={styles.button} onPress={pickImage} /> 
         
         
@@ -58,4 +64,8 @@ export default function ImportScreen({route}){
       width: 100,
       height: 100,
     },
+    image: {
+      width: 300,
+      height: 527,
+    }
   }); 
