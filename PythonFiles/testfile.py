@@ -7,7 +7,7 @@ blank[200:300, 300:400] = 255,0,0
 cv.rectangle(blank, (0, 0), (250, 250), (255, 0, 0), thickness=2)
 cv.imshow("Rectangle", blank)
 
-img = cv.imread('TestPhotos/jidion.jpg')
+img = cv.imread('PythonFiles/TestPhotos/jidion.jpg')
 
 def rescaleFrame(frame, scale=0.5):
     width = int(frame.shape[1] * scale)

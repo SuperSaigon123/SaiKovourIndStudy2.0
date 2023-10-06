@@ -8,7 +8,7 @@ while True:
 
     grayVid = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-    haar_cascade = cv.CascadeClassifier('haar_face.xml')
+    haar_cascade = cv.CascadeClassifier('PythonFiles/haar_face.xml')
 
     faces_rect = haar_cascade.detectMultiScale(grayVid, scaleFactor=1.1, minNeighbors=7)
 

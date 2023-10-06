@@ -10,6 +10,7 @@ export default function ImportScreen({route, navigation}){
 
   let initial = null;
   const [image, setImage] = React.useState(null); 
+  const [imageWidth, setWidth] = React.useState(0)
 
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
@@ -32,6 +33,7 @@ export default function ImportScreen({route, navigation}){
 
         if (route.params !== undefined){
           initial = route.params.paramKey
+          setWidth(300)
         }
 
         setImage(initial)
@@ -42,10 +44,10 @@ export default function ImportScreen({route, navigation}){
   return (
       <View style={styles.container}>
         <Text>Import screen</Text> 
-        <Image style={styles.image} source={{uri: image}} /> 
-        <Button title="Click me" style={styles.button} onPress={pickImage} /> 
-        
-        
+        {image !== null ?
+        <Image style={styles.image} source={{uri: image}} />
+        : <Button title="Click me" style={styles.button} onPress={pickImage} />}
+         
       </View>
     );
   }
@@ -66,6 +68,7 @@ export default function ImportScreen({route, navigation}){
     },
     image: {
       width: 300,
-      height: 527,
+      height: undefined,
+      aspectRatio: 0.57,
     }
   }); 
