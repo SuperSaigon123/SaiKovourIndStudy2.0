@@ -34,6 +34,9 @@ export default function ImportScreen({route, navigation}){
         if (route.params !== undefined){
           initial = route.params.paramKey
           setWidth(300)
+
+          //create a function for FastAPI here.....
+          sendScripts(initial);
         }
 
         setImage(initial)
@@ -41,9 +44,13 @@ export default function ImportScreen({route, navigation}){
       })
     );
 
+  async function sendScripts(initial){
+    
+  }
+
   return (
       <View style={styles.container}>
-        <Text>Import screen</Text> 
+        <Text>You have selected:</Text> 
         {image !== null ?
         <Image style={styles.image} source={{uri: image}} />
         : <Button title="Click me" style={styles.button} onPress={pickImage} />}

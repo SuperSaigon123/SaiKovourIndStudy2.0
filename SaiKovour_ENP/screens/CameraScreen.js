@@ -1,160 +1,167 @@
-import React from 'react';
-import { StyleSheet, Image, Text, View, useState, TouchableOpacity } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import React, { useState, useRef } from 'react';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Camera } from 'expo-camera';
 import { Button, IconButton } from 'react-native-paper';
-import CamButton from '../components/CamButton';
-import * as MediaLibrary from 'expo-media-library'
 
-export default function CameraScreen({navigation}) {
-    const [image, setImage] = React.useState(null)
-    const [uri, setUri] = React.useState(null)
-    const [type, setType] = React.useState(CameraType.back);
-    const [permission, requestPermission] = React.useState(null);
-    const [flash, setFlash] = React.useState(Camera.Constants.FlashMode.off)
-    const cameraRef = React.useRef(null)
+export default function CameraScreen({ navigation }) {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
+  const [isRecording, setIsRecording] = useState(false);
+  const cameraRef = useRef(null);
 
-    function toggleCameraType() {
-      setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
-    }
-
-    React.useEffect(() => {
-      (async () => {
-        MediaLibrary.requestPermissionsAsync();
-        const cameraStatus = await Camera.requestCameraPermissionsAsync();
-        requestPermission(cameraStatus.status === 'granted')
-      })();
-    }, [])
-
-    const takePicture = async() => {
-      if(cameraRef) {
-        try{
-          const data = await cameraRef.current.takePictureAsync();
-          console.log(data)
-          setImage(data.uri);
-          setUri(data.uri)
-        } catch(e){
-          console.log(e);
-        }
-      }
-    }
-
-    const saveImage = async() => {
-      console.log('test')
-      if(image) {
-        try {
-          const asset = await MediaLibrary.createAssetAsync(image)
-          alert('Picture saved!')
-          setImage(null)
-          setUri(null)
-        } catch(e) {
-          console.log(e)
-        }
-      }
-    }
-
-    if(permission === false){
-      return <Text>No access to camera</Text>
-    }
-
-    function testFunc(){
-      console.log("Test")
-    }
-
-    return (
-      <View style={styles.container}>
-        {!image ?
-        <Camera style={styles.camera} type={type} flashMode={flash} ref={cameraRef}>
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            padding: 30
-          }}>
-            <IconButton 
-              icon={"repeat-variant"}
-              mode={'outlined'}
-              iconColor='#FFFFFF'
-              size={40}
-              onPress={() => {
-                setType(
-                  type === CameraType.back ? CameraType.front : CameraType.back
-                );
-              }}/>
-            <IconButton 
-              icon={"flash"} 
-              mode={'outlined'}
-              iconColor={flash === Camera.Constants.FlashMode.off ? 'gray' : '#fff'}
-              size={40}
-              onPress={() =>
-                setFlash(
-                  flash === Camera.Constants.FlashMode.off
-                    ? Camera.Constants.FlashMode.on && console.log("Flash: ON")
-                    : Camera.Constants.FlashMode.off
-                )
-              }/>
-          </View>
-        </Camera>
-        :
-        <Image source={{uri: image}} style={styles.camera}/>
-}
-        <View>
-          {image ?
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            paddingHorizontal: 50
-          }}>
-            <Button 
-              icon="refresh" 
-              onPress={() =>{
-                setImage(null)
-                setUri(null)}} 
-              style={styles.button}
-              textColor='white'>
-                Re-take
-            </Button>
-            <Button 
-              icon="check" 
-              onPress={() => {
-                navigation.navigate('Import', {
-                  paramKey: image
-                })
-                setImage(null)
-                setUri(null)
-              }} 
-              style={styles.button}
-              textColor='white'>
-                Save
-            </Button>
-          </View>
-          :
-          <CamButton
-            title={'Take picture'} 
-            icon={'camera'}
-            color={'white'}
-            onPressFunc={takePicture}
-            ></CamButton>
-}
-        </View>
-      </View>
+  const toggleCameraType = () => {
+    setCameraType(
+      cameraType === Camera.Constants.Type.back
+        ? Camera.Constants.Type.front
+        : Camera.Constants.Type.back
     );
-  }
-  
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#000',
-      justifyContent: 'center',
-      paddingBottom: 120,
-    }, 
-    camera: {
-      flex: 1,
-    },
-    button: {
-      marginBottom: -20,
-      height: 40,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: 100,
-    },
-  });
+  };
+
+  const handleRecordButton = async () => {
+    if (isRecording) {
+      // Stop recording
+      cameraRef.current.stopRecording();
+      setIsRecording(false);
+    } else {
+      // Start recording
+      const recording = await cameraRef.current.recordAsync();
+      console.log('Recording:', recording);
+
+      // Send the video to the FastAPI server for processing
+      sendMediaToServer(recording.uri, 'video/mp4');
+      
+      setIsRecording(true);
+    }
+  };
+
+  const takePicture = async () => {
+    if (cameraRef) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync();
+        console.log(photo);
+
+        // Send the photo to the FastAPI server for processing
+        sendMediaToServer(photo.uri, 'image/jpeg');
+      } catch (e) {
+        console.error('Error taking picture:', e);
+      }
+    }
+  };
+
+  const sendMediaToServer = async (uri, contentType) => {
+    const apiUrl = 'http://127.0.0.1:8000/process_media';
+    const formData = new FormData();
+    console.log(contentType)
+    formData.append('file', {
+      uri: uri,
+      type: contentType,
+      name: 'media',
+    });
+    console.log(formData)
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      
+
+      if (response.ok) {
+        // Process the response, assuming it is a media file
+        const processedMediaUri = URL.createObjectURL(await response.blob());
+        console.log('Processed Media URI:', processedMediaUri);
+        // Handle the processed media as needed
+      } else {
+        console.error('Failed to send media to FastAPI server');
+      }
+    } catch (error) {
+      console.error('Error sending media to server:', error);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Camera
+        style={styles.camera}
+        type={cameraType}
+        ref={cameraRef}
+        useCamera2Api={false}
+      >
+        <View style={styles.cameraControls}>
+          <IconButton
+            icon="camera-switch"
+            color="#fff"
+            size={30}
+            onPress={toggleCameraType}
+          />
+        </View>
+      </Camera>
+
+      <View style={styles.recordButtonContainer}>
+        <TouchableOpacity onPress={handleRecordButton}>
+          <View
+            style={[
+              styles.recordButton,
+              isRecording ? styles.recording : null,
+            ]}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.captureButtonContainer}>
+        <TouchableOpacity onPress={takePicture}>
+          <View style={styles.captureButton} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraControls: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: 20,
+  },
+  recordButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+  },
+  recordButton: {
+    width: 60,
+    height: 60,
+    bottom: 110,
+    borderRadius: 30,
+    backgroundColor: '#FF0000',
+  },
+  recording: {
+    backgroundColor: '#FF0000',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  captureButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+  },
+  captureButton: {
+    width: 60,
+    height: 60,
+    bottom: 110,
+    borderRadius: 30,
+    backgroundColor: '#fff',
+  },
+});
